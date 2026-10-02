@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幼儿园安全教育</title>
+  <link rel="stylesheet" href="./css/styles.css?v=20260627-agentnav1">
+</head>
+<body>
+  <main class="scene-shell" aria-label="学前教育安全实训场景">
+    <div class="scene-stage">
+      <canvas id="sceneCanvas"></canvas>
+
+      <div class="scene-loading" id="sceneLoading">
+        <span class="loading-dot"></span>
+        <span id="sceneLoadingText">正在加载实训场景...</span>
+      </div>
+
+      <button class="tree-menu-open-button" id="treeMenuOpenButton" type="button" aria-label="打开设置菜单">设置</button>
+
+      <section class="bubble-layer" aria-live="polite">
+        <div class="speech-bubble" id="answerBubble">
+          <p id="answerText">安全实训场景已经准备好了。</p>
+          <button class="answer-expand-button is-hidden" id="answerExpandButton" type="button" aria-expanded="false">展开</button>
+        </div>
+        <div class="question-bubble is-hidden" id="questionBubble"></div>
+      </section>
+
+      <section class="quiz-panel is-hidden" id="quizPanel" aria-label="做题选项">
+        <div class="quiz-header">
+          <h2 id="quizTitle">做题模式</h2>
+          <button class="quiz-minimize-button" id="quizMinimizeButton" type="button" aria-label="最小化做题面板">−</button>
+        </div>
+        <p id="quizPrompt"></p>
+        <div class="quiz-options" id="quizOptions"></div>
+        <button class="quiz-submit-button" id="quizSubmitButton" type="button">提交选择</button>
+      </section>
+      <button class="quiz-reopen-button is-hidden" id="quizReopenButton" type="button">查看题目</button>
+
+      <section class="assessment-modal is-hidden" id="assessmentModal" role="dialog" aria-modal="true" aria-labelledby="assessmentModalTitle">
+        <div class="assessment-dialog">
+          <div class="assessment-header">
+            <h2 id="assessmentModalTitle">AI测评结果</h2>
+            <button class="assessment-close-button" id="assessmentCloseButton" type="button" aria-label="关闭AI测评结果">×</button>
+          </div>
+          <div class="assessment-result" id="assessmentResultText"></div>
+          <div class="assessment-actions">
+            <button id="assessmentRestartButton" type="button">重开</button>
+            <button id="assessmentNextButton" type="button">下一场景</button>
+          </div>
+        </div>
+      </section>
+      <button class="assessment-reopen-button is-hidden" id="assessmentReopenButton" type="button">查看AI测评</button>
+
+      <form class="voice-console" id="askForm">
+        <button class="mic-button" id="micButton" type="button" aria-pressed="false">
+          <span class="mic-icon" aria-hidden="true"></span>
+          <span id="micLabel">朗读/停止</span>
+        </button>
+        <input id="messageInput" type="text" autocomplete="off" maxlength="500" placeholder="输入当前场景的安全问题">
+        <button id="sendButton" type="submit">提问</button>
+        <button id="newChatButton" type="button" class="ghost-button">新对话</button>
+        <button id="prevSceneButton" type="button" class="scene-nav-button">上一个场景</button>
+        <button id="nextSceneButton" type="button" class="scene-nav-button">下一个场景</button>
+        <p class="status-line" id="statusText">单机版可直接双击打开；云端问答和语音识别需要服务器版。</p>
+      </form>
+
+      <aside class="settings-panel is-hidden" id="settingsPanel" aria-label="场景设置">
+        <div class="settings-header">
+          <h2>场景设置</h2>
+          <div class="settings-header-actions">
+            <button id="closeSettingsButton" type="button" title="关闭设置">×</button>
+          </div>
+        </div>
+        <section class="settings-section">
+          <h3>API代理服务器</h3>
+          <label>
+            <span>代理接口地址</span>
+            <input id="apiProxyUrl" type="text" placeholder="http://127.0.0.1:5000/api">
+          </label>
+          <div class="settings-actions">
+            <button id="apiProxyTestButton" type="button">测试代理</button>
+          </div>
+          <p class="settings-hint" id="apiProxyStatus"></p>
+        </section>
+        <section class="settings-section">
+          <h3>当前场景</h3>
+          <label>
+            <span>选择场景</span>
+            <select id="sceneSelect"></select>
+          </label>
+          <label>
+            <span>替换背景图</span>
+            <input id="sceneBackgroundFile" type="file" accept="image/*">
+          </label>
+          <label>
+            <span>背景路径或URL</span>
+            <input id="sceneBackgroundUrl" type="text" placeholder="./assets/backgrounds/xxx.jpg">
+          </label>
+          <label>
+            <span>场景问题</span>
+            <textarea id="sceneQuestion" rows="3"></textarea>
+          </label>
+          <label>
+            <span>正确答案/讲解要点</span>
+            <textarea id="sceneCorrectAnswer" rows="3"></textarea>
+          </label>
+          <label>
+            <span>系统提示词</span>
+            <textarea id="sceneSystemPrompt" rows="6"></textarea>
+          </label>
+          <p class="settings-hint" id="sceneBackgroundStatus"></p>
+          <p class="settings-hint missing-background-list" id="sceneMissingBackgrounds"></p>
+        </section>
+        <section class="settings-section" id="quizContentSection">
+          <h3>做题内容</h3>
+          <label>
+            <span>题目问题</span>
+            <textarea id="sceneQuizPrompt" rows="3"></textarea>
+          </label>
+          <label>
+            <span>选项（每行一个，自动生成A/B/C）</span>
+            <textarea id="sceneQuizOptions" rows="6"></textarea>
+          </label>
+          <label>
+            <span>正确选项ID</span>
+            <input id="sceneQuizCorrectIds" type="text" placeholder="例如：B,E">
+          </label>
+          <label>
+            <span>题目讲解</span>
+            <textarea id="sceneQuizExplanation" rows="4"></textarea>
+          </label>
+        </section>
+        <section class="settings-section" id="assessmentContentSection">
+          <h3>AI测评内容</h3>
+          <label>
+            <span>幼儿预设问题</span>
+            <textarea id="sceneChildPrompt" rows="3"></textarea>
+          </label>
+          <label>
+            <span>测评重点</span>
+            <textarea id="sceneAssessmentFocus" rows="3"></textarea>
+          </label>
+          <label>
+            <span>参考示范回答</span>
+            <textarea id="sceneIdealTeacherResponse" rows="4"></textarea>
+          </label>
+          <label>
+            <span>评分标准</span>
+            <textarea id="sceneEvaluationRubric" rows="5"></textarea>
+          </label>
+          <label>
+            <span>AI测评提示词</span>
+            <textarea id="sceneEvaluationPrompt" rows="6"></textarea>
+          </label>
+        </section>
+        <section class="settings-section">
+          <h3>回答气泡</h3>
+          <label><span>大小</span><input id="answerBubbleScale" type="range" min="0.75" max="1.35" step="0.01" value="1"></label>
+          <label><span>宽度</span><input id="answerBubbleWidth" type="range" min="360" max="760" step="10" value="520"></label>
+          <label><span>左右位置</span><input id="answerBubbleX" type="range" min="-480" max="480" step="1" value="0"></label>
+          <label><span>上下位置</span><input id="answerBubbleY" type="range" min="-260" max="260" step="1" value="0"></label>
+        </section>
+        <section class="settings-section">
+          <h3>幼儿提问气泡</h3>
+          <label><span>大小</span><input id="childBubbleScale" type="range" min="0.75" max="1.35" step="0.01" value="1"></label>
+          <label><span>宽度</span><input id="childBubbleWidth" type="range" min="260" max="620" step="10" value="360"></label>
+          <label><span>左右位置</span><input id="childBubbleX" type="range" min="0" max="1500" step="1" value="240"></label>
+          <label><span>上下位置</span><input id="childBubbleY" type="range" min="-620" max="220" step="1" value="-70"></label>
+        </section>
+        <section class="settings-section">
+          <h3>背景</h3>
+          <label><span>缩放</span><input id="backgroundScale" type="range" min="0.7" max="1.6" step="0.01" value="1"></label>
+          <label><span>左右平移</span><input id="backgroundX" type="range" min="-35" max="35" step="0.5" value="0"></label>
+          <label><span>上下平移</span><input id="backgroundY" type="range" min="-35" max="35" step="0.5" value="0"></label>
+        </section>
+        <section class="settings-section">
+          <h3>老师</h3>
+          <label><span>大小</span><input id="teacherScale" type="range" min="0.65" max="1.35" step="0.01" value="1"></label>
+          <label><span>左右位置</span><input id="teacherX" type="range" min="-2.2" max="2.2" step="0.02" value="-0.78"></label>
+          <label><span>上下位置</span><input id="teacherY" type="range" min="-0.6" max="0.8" step="0.02" value="0"></label>
+          <label><span>X轴旋转（度）</span><input id="teacherRotationX" type="range" min="-45" max="45" step="1" value="0"></label>
+          <label><span>Y轴旋转（度）</span><input id="teacherRotationY" type="range" min="-180" max="180" step="1" value="-90"></label>
+        </section>
+        <section class="settings-section">
+          <h3>小朋友</h3>
+          <label><span>大小</span><input id="girlScale" type="range" min="0.65" max="1.35" step="0.01" value="1"></label>
+          <label><span>左右位置</span><input id="girlX" type="range" min="-2.2" max="2.2" step="0.02" value="0.92"></label>
+          <label><span>上下位置</span><input id="girlY" type="range" min="-0.6" max="0" step="0.02" value="0"></label>
+          <label><span>X轴旋转（度）</span><input id="girlRotationX" type="range" min="-45" max="45" step="1" value="0"></label>
+          <label><span>Y轴旋转（度）</span><input id="girlRotationY" type="range" min="-180" max="180" step="1" value="-90"></label>
+        </section>
+        <button id="resetSceneButton" type="button">重置场景</button>
+      </aside>
+    </div>
+  </main>
+
+  <script src="./vendor/three.min.js?v=20260624-fix9"></script>
+  <script src="./vendor/GLTFLoader.js?v=20260624-fix9"></script>
+  <script src="./js/config.js?v=20260624-fix9"></script>
+  <script src="./js/data/model-data.js?v=20260624-fix9"></script>
+  <script src="./js/data/tree-menu-data.js?v=20260627-vrdialog1"></script>
+  <script src="./js/data/scene-presets.js?v=20260627-agent1"></script>
+  <script src="./js/core/tree-menu.js?v=20260624-fix12"></script>
+  <script src="./js/core/training-flow.js?v=20260627-agent1"></script>
+  <script src="./js/core/cloud-services.js?v=20260627-home1"></script>
+  <script src="./js/core/offline-assistant.js?v=20260627-agent1"></script>
+  <script src="./js/core/scene-renderer.js?v=20260624-fix13"></script>
+  <script src="./js/core/scene-settings.js?v=20260627-home1"></script>
+  <script src="./js/app.js?v=20260627-vrdialog1"></script>
+</body>
+</html>

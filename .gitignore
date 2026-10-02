@@ -1,0 +1,8 @@
+*.ini
+!proxy/coze_config.example.ini
+*.log
+*.wav
+*.zip
+node_modules/
+__pycache__/
+.env
